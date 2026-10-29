@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Answer 7 quick questions and compare the monthly cost of five ways to build your SaaS product in Australia.">
+<style>html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Dev Team Cost Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a costing "quote sheet" — one question per card, then a summary and a side-by-side cost schedule. Light theme only by design. */
+:root{
+  --paper:#F6F7F4; --sheet:#FFFFFF; --ink:#142019; --muted:#56635B; --line:#D9DED8; --line-strong:#B9C2BB;
+  --gum:#1E6A4F; --gum-deep:#123F30; --gum-soft:#E4F0EA;
+  --wattle:#D9A033; --wattle-soft:#FBF1DC; --warn:#87570A;
+  --display:'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
+  --body:'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono:'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* legacy names used by the script-built markup */
+  --bg:var(--paper); --surface:var(--sheet); --accent:var(--gum); --accent-soft:var(--gum-soft); --good:var(--gum); --good-soft:var(--gum-soft); --warn-soft:var(--wattle-soft);
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+body{background:var(--paper); color:var(--ink); font-family:var(--body); font-size:15.5px; line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:40px 56px}
+.wrap{max-width:1040px; margin:0 auto; display:flex; flex-direction:column; gap:28px}
+
+header{display:flex; flex-direction:column; gap:12px; max-width:760px; padding-bottom:24px; border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:var(--mono); font-size:12px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--gum)}
+h1{margin:0; font-family:var(--display); font-size:clamp(32px, 5vw, 52px); line-height:1.02; font-weight:700; letter-spacing:-.025em; text-wrap:balance}
+.lede{margin:0; color:var(--muted); font-size:17px; max-width:60ch}
+
+.demo{background:var(--wattle-soft); color:var(--warn); border-left:3px solid var(--wattle); padding:10px 14px; font-size:13.5px; max-width:760px}
+.card{background:var(--sheet); border:1px solid var(--line); border-radius:4px; padding:28px; display:flex; flex-direction:column; gap:20px; min-width:0}
+.quiz{max-width:760px; box-shadow:0 1px 0 var(--line), 0 12px 32px -20px rgba(20,32,25,.25)}
+
+.progress{display:flex; flex-direction:column; gap:10px}
+.progress-top{display:flex; justify-content:space-between; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.04em; text-transform:uppercase; font-variant-numeric:tabular-nums}
+.track{height:6px; background:var(--line); overflow:hidden;
+  -webkit-mask:repeating-linear-gradient(90deg,#000 0 calc(100%/7 - 4px),transparent calc(100%/7 - 4px) calc(100%/7));
+          mask:repeating-linear-gradient(90deg,#000 0 calc(100%/7 - 4px),transparent calc(100%/7 - 4px) calc(100%/7))}
+.track span{display:block; height:100%; background:var(--gum); transition:width .25s ease}
+
+.q{margin:0; font-family:var(--display); font-size:clamp(22px, 3vw, 28px); line-height:1.15; font-weight:600; letter-spacing:-.015em; text-wrap:balance}
+.q:focus{outline:none}
+.choices{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:10px}
+.choice{appearance:none; text-align:left; border:1px solid var(--line-strong); background:var(--sheet); border-radius:4px; padding:14px 16px 14px 52px; min-height:58px; font:600 15px var(--body); color:var(--ink); cursor:pointer; display:flex; flex-direction:column; justify-content:center; gap:2px; position:relative; transition:border-color .12s, background .12s}
+.choice .key{position:absolute; left:14px; top:50%; transform:translateY(-50%); width:26px; height:26px; display:grid; place-items:center; border:1px solid var(--line-strong); border-radius:3px; font:500 12px var(--mono); color:var(--muted)}
+.choice small{font-weight:400; font-size:13px; color:var(--muted)}
+.choice:hover{border-color:var(--gum); background:#FAFCFB}
+.choice:hover .key{border-color:var(--gum); color:var(--gum)}
+.choice[aria-pressed="true"]{border-color:var(--gum); box-shadow:0 0 0 1px var(--gum) inset; background:var(--gum-soft)}
+.choice[aria-pressed="true"] .key{background:var(--gum); border-color:var(--gum); color:#fff}
+
+.roles{display:flex; flex-direction:column; gap:4px}
+.role{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px 16px; padding:8px 0; border-bottom:1px dashed var(--line)}
+.role:last-child{border-bottom:0}
+.role-name{font-weight:600; font-size:15px}
+.seg{display:flex; border:1px solid var(--line-strong); border-radius:4px; overflow:hidden}
+.seg button{appearance:none; border:0; border-left:1px solid var(--line); background:var(--sheet); color:var(--ink); font:500 13px var(--mono); min-width:48px; min-height:44px; padding:0 10px; cursor:pointer; font-variant-numeric:tabular-nums}
+.seg button:first-child{border-left:0; font-family:var(--body); font-weight:600}
+.seg button:hover{background:var(--gum-soft)}
+.seg button[aria-pressed="true"]{background:var(--ink); color:#fff}
+
+.btn.primary:disabled{background:var(--line-strong); border-color:var(--line-strong); cursor:default}
+#next{align-self:flex-start}
+.quiz-foot{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; border-top:1px solid var(--line); padding-top:8px}
+.link{appearance:none; border:0; background:none; color:var(--gum); font:600 14px var(--body); cursor:pointer; padding:8px 0; min-height:44px; text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--line-strong)}
+.link:hover{text-decoration-color:var(--gum)}
+.link:disabled{color:var(--line-strong); text-decoration:none; cursor:default}
+button:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible{outline:2px solid var(--wattle); outline-offset:2px}
+
+.summary{border-top:4px solid var(--gum)}
+.summary h2{margin:0; font-family:var(--display); font-size:clamp(24px, 3.4vw, 34px); line-height:1.1; font-weight:700; letter-spacing:-.02em; text-wrap:balance}
+.summary p{margin:0; max-width:66ch; color:#2A3730}
+.picks{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px}
+.pick{border:1px solid var(--line); border-radius:4px; padding:16px 18px; display:flex; flex-direction:column; gap:6px}
+.pick.best{border-color:var(--gum); background:var(--gum-soft)}
+.pick .lbl{font-family:var(--mono); font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.pick.best .lbl{color:var(--gum)}
+.pick strong{font-family:var(--display); font-size:19px; font-weight:600; letter-spacing:-.01em}
+.pick span{font-size:13.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+.actions{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+.btn{display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 20px; border-radius:4px; font:700 14.5px var(--body); text-decoration:none; cursor:pointer; border:1px solid var(--ink)}
+.btn.primary{background:var(--ink); color:#fff}
+.btn.primary:not(:disabled):hover{background:var(--gum-deep)}
+.btn.ghost{background:var(--sheet); color:var(--ink); border-color:var(--line-strong)}
+.btn.ghost:hover{border-color:var(--ink)}
+
+h3.sec{margin:0; font-family:var(--display); font-size:22px; font-weight:600; letter-spacing:-.01em}
+.sec-hint{margin:-14px 0 0; color:var(--muted); font-size:14px}
+.compare{overflow-x:auto; border:1px solid var(--line); border-radius:4px; background:var(--sheet)}
+table{width:100%; border-collapse:collapse; min-width:840px; font-variant-numeric:tabular-nums}
+th, td{padding:14px 16px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line); font-size:14px}
+thead th{font-family:var(--mono); font-size:11.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); background:var(--paper); border-bottom:1px solid var(--ink)}
+tbody tr:last-child td{border-bottom:0}
+tr.is-best td{background:var(--gum-soft)}
+tr.is-best td:first-child{box-shadow:inset 3px 0 0 var(--gum)}
+.optname{font-weight:700; font-size:15px; display:flex; flex-direction:column; gap:6px}
+.badge{align-self:flex-start; font-family:var(--mono); font-size:10.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; padding:3px 7px; border-radius:2px}
+.badge.best{background:var(--gum); color:#fff}
+.badge.runner{background:var(--sheet); color:var(--ink); border:1px solid var(--line-strong)}
+.badge.us{background:var(--wattle); color:var(--ink)}
+.year{font-family:var(--mono); font-size:16px; font-weight:600}
+td{font-family:var(--body)}
+.sub{display:block; font-family:var(--body); font-size:12.5px; color:var(--muted); font-weight:400}
+.mini{height:5px; background:var(--line); overflow:hidden; margin-top:8px; width:140px; max-width:100%}
+.mini span{display:block; height:100%; background:var(--line-strong)}
+tr.is-best .mini span{background:var(--gum)}
+.flags{display:flex; flex-direction:column; gap:4px}
+.flag{font-size:12.5px; color:var(--warn); background:var(--wattle-soft); border-radius:2px; padding:2px 8px; align-self:flex-start}
+.ok{font-size:12.5px; color:var(--gum); font-weight:600}
+.note{color:var(--muted); font-size:13px; margin:-12px 0 0}
+
+.cta{background:var(--gum-deep); color:#fff; border-radius:4px; padding:26px 28px; display:flex; flex-wrap:wrap; gap:14px 28px; align-items:center; justify-content:space-between}
+.cta p{margin:0; max-width:56ch; color:#D3E4DB}
+.cta strong{display:block; font-family:var(--display); font-size:21px; font-weight:600; color:#fff; letter-spacing:-.01em; margin-bottom:2px}
+.cta .btn{background:var(--wattle); color:var(--ink); border-color:var(--wattle)}
+.cta .btn:hover{background:#E6B04A}
+
+details{background:var(--sheet); border:1px solid var(--line); border-radius:4px; padding:18px 22px}
+summary{cursor:pointer; font-family:var(--display); font-weight:600; font-size:17px}
+.assume{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px; margin-top:16px}
+.assume h4{grid-column:1 / -1; margin:10px 0 0; font-family:var(--mono); font-size:11.5px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--gum); padding-bottom:6px; border-bottom:1px solid var(--line)}
+.field{display:flex; flex-direction:column; gap:6px}
+.field label{font-weight:600; font-size:13.5px}
+input[type=number]{width:100%; font:500 14px var(--mono); padding:9px 10px; border:1px solid var(--line-strong); border-radius:3px; background:var(--sheet); color:var(--ink); font-variant-numeric:tabular-nums}
+input[type=number]:focus{border-color:var(--gum)}
+.sources{margin:18px 0 0; font-size:13px; color:var(--muted)}
+.sources a{color:var(--gum)}
+.byline{margin:4px 0 0; font-size:14px; color:var(--muted); display:flex; flex-wrap:wrap; gap:4px 8px; align-items:center}
+.byline strong{color:var(--ink)}
+.byline a{color:var(--gum); font-weight:600; text-underline-offset:3px}
+.byline .dot{color:var(--line-strong)}
+.mail{font-family:var(--mono); font-size:13px; user-select:all; -webkit-user-select:all}
+.cta-side{display:flex; flex-direction:column; gap:8px; align-items:flex-start}
+.cta-mail{font-size:13px; color:#D3E4DB}
+.cta-mail .mail{color:#fff}
+@media (prefers-reduced-motion:reduce){ .track span, .choice{transition:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">For non-technical SaaS founders in Australia</span>
+    <h1>What will a dev team really cost you?</h1>
+    <p class="lede">Answer 7 quick questions and pick the team you need. You'll get a plain-English result and the monthly cost of five ways to build your product, including doing it yourself with AI.</p>
+    <p class="byline">Made by <strong>Zer Absin</strong>, product &amp; tech lead <span class="dot" aria-hidden="true">·</span> <a href="https://www.linkedin.com/in/eabsin/" target="_blank" rel="noopener">LinkedIn</a> <span class="dot" aria-hidden="true">·</span> <span class="mail">zer@dreamboat-labs.com</span></p>
+  </header>
+
+  <div class="demo" role="note"><strong>Demo.</strong> Figures are starting assumptions, not quotes. Check and edit them under "Assumptions" before sharing.</div>
+
+  <section class="card quiz" id="quiz" aria-live="polite">
+    <div class="progress">
+      <div class="progress-top"><span id="qcount">Question 1 of 7</span><span>About 60 seconds</span></div>
+      <div class="track" aria-hidden="true"><span id="qbar" style="width:16.6%"></span></div>
+    </div>
+    <h2 class="q" id="qtext" tabindex="-1"></h2>
+    <p class="sec-hint" id="qhint" style="margin:-8px 0 0" hidden></p>
+    <div class="choices" id="choices"></div>
+    <button class="btn primary" id="next" type="button" hidden>Next →</button>
+    <div class="quiz-foot">
+      <button class="link" id="back" type="button">← Back</button>
+      <button class="link" id="example" type="button">Skip to an example result</button>
+    </div>
+  </section>
+
+  <section id="results" hidden>
+    <div style="display:flex; flex-direction:column; gap:24px">
+      <div class="card summary">
+        <span class="eyebrow">Your result</span>
+        <h2 id="headline"></h2>
+        <p id="story"></p>
+        <div class="picks" id="picks"></div>
+        <div class="actions">
+          <button class="btn ghost" id="redo" type="button">Change my answers</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="sec">Your team</h3>
+        <p class="sec-hint" style="margin:0">Change any role and the costs below update straight away.</p>
+        <div class="roles" id="teamedit"></div>
+      </div>
+
+      <h3 class="sec">All five options, side by side</h3>
+      <p class="sec-hint">Same team for every option. "Your time" is what you'd spend managing it, valued at your hourly rate.</p>
+      <div class="compare">
+        <table>
+          <thead><tr><th scope="col">Option</th><th scope="col">Monthly cost</th><th scope="col">Team cost</th><th scope="col">AI tools</th><th scope="col">Your time</th><th scope="col">Time to start</th><th scope="col">Fit for you</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="note" id="teamnote"></p>
+
+      <div class="cta">
+        <p><strong>Want an exact plan for your product?</strong>A Product &amp; Tech Assessment maps what you need, the right team and a fixed quote, in 7 business days.</p>
+        <div class="cta-side"><a class="btn" href="https://calendly.com/zer-dreamboat-labs/30min" target="_blank" rel="noopener">Book a 30-min call</a><span class="cta-mail">or email <span class="mail">zer@dreamboat-labs.com</span></span></div>
+      </div>
+
+      <details id="assumptions">
+        <summary>Assumptions (edit any number)</summary>
+        <div class="assume" id="assume"></div>
+        <p class="sources">Starting points: Australian agency rates of A$150–250/hour (<a href="https://whatsthedamage.com.au/web-development-cost/" target="_blank" rel="noopener">What's the Damage</a>); senior software developer median salary around A$127k (<a href="https://www.payscale.com/research/AU/Job=Senior_Software_Developer/Salary" target="_blank" rel="noopener">Payscale, June 2026</a>); superannuation guarantee 12%. Payroll tax starts at 0% because most small teams sit under their state's threshold. AI tool costs are typical paid plans for coding assistants and AI app builders. Monthly hours assume a 38-hour week.</p>
+      </details>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var QUESTIONS = [
+    {id:'stage', text:"Where's your product right now?", options:[
+      {v:'idea', label:'Just an idea', hint:'Nothing built yet'},
+      {v:'mvp', label:'Being built', hint:'Working on a first version'},
+      {v:'live', label:'Live with customers', hint:'People are paying or using it'},
+      {v:'growing', label:'Growing fast', hint:'More customers than the product can keep up with'}]},
+    {id:'team', type:'team', text:'Who do you need on your team?', hint:"We've suggested a team for your stage. Change anything: 1 means full time, ½ means half the week."},
+    {id:'who', text:'Who builds it today?', options:[
+      {v:'nobody', label:'Nobody yet'},
+      {v:'self', label:'Me, with AI tools'},
+      {v:'freelance', label:'Freelancers'},
+      {v:'agency', label:'An agency'},
+      {v:'inhouse', label:'My own team'}]},
+    {id:'problem', text:"What's the biggest problem right now?", options:[
+      {v:'start', label:"I don't know where to start"},
+      {v:'slow', label:'Releases are slow or keep slipping'},
+      {v:'quality', label:"I can't tell if the work is any good"},
+      {v:'cost', label:'It costs too much'},
+      {v:'owner', label:'Nobody owns the product but me'}]},
+    {id:'time', text:'How many hours a week can you spend managing the build?', options:[
+      {v:1.5, label:'Under 2 hours'},
+      {v:4, label:'2 to 5 hours'},
+      {v:8, label:'5 to 10 hours'},
+      {v:15, label:'More than 10 hours'}]},
+    {id:'budget', text:'Roughly what can you spend each month?', options:[
+      {v:10000, label:'Under A$10k'},
+      {v:25000, label:'A$10k to A$25k'},
+      {v:50000, label:'A$25k to A$50k'},
+      {v:Infinity, label:'More than A$50k'}]},
+    {id:'speed', text:'How soon do you need results?', options:[
+      {v:'month', label:'This month'},
+      {v:'quarter', label:'In the next 3 months'},
+      {v:'year', label:'This year'}]}
+  ];
+  var EXAMPLE = {stage:'live', who:'freelance', problem:'slow', time:4, budget:25000, speed:'quarter'};
+
+  var STAGES = {
+    idea:   {desc:'still an idea', team:{lead:.25, senior:.5, mid:0, qa:0, design:.25}, diyH:15},
+    mvp:    {desc:'being built', team:{lead:.5, senior:1, mid:.5, qa:.25, design:.25}, diyH:20},
+    live:   {desc:'live with customers', team:{lead:.5, senior:1, mid:1, qa:.5, design:.25}, diyH:25},
+    growing:{desc:'growing fast', team:{lead:1, senior:2, mid:1, qa:1, design:.5}, diyH:30}
+  };
+  var WHO = {nobody:'nobody is building it yet', self:"you're building it yourself with AI tools", freelance:'freelancers are building it', agency:'an agency is building it', inhouse:'your own team is building it'};
+  var HEADLINES = {
+    start:"You need a plan before you need a team.",
+    slow:"Your releases need an owner, not just more developers.",
+    quality:"You need someone on your side who can judge the work.",
+    cost:"You can likely get more for the same budget.",
+    owner:"You need someone to own the product, so you don't have to."
+  };
+  var ROLES = [
+    {id:'lead', name:'Product / tech lead', salary:160000},
+    {id:'senior', name:'Senior developer', salary:135000},
+    {id:'mid', name:'Mid-level developer', salary:110000},
+    {id:'qa', name:'QA tester', salary:95000},
+    {id:'design', name:'UI/UX designer', salary:110000}
+  ];
+  var DEFAULTS = {founderValue:150, superPct:12, payrollPct:0, onCostPct:8, recruitPct:15,
+    agencyRate:175, freelancerRate:55, aiPerDev:100, diyTools:200,
+    'our-lead':5000, 'our-senior':3500, 'our-mid':3000, 'our-qa':3000, 'our-design':3000,
+    mgmtInhouse:6, mgmtAgency:3, mgmtFreelance:10, mgmtManaged:1.5};
+  var HOURS_PER_FTE_MONTH = 38*52/12, WEEKS_PER_MONTH = 52/12;
+
+  var answers = {}, step = 0;
+  var fmt = new Intl.NumberFormat('en-AU', {style:'currency', currency:'AUD', maximumFractionDigits:0});
+  function money(n){ return fmt.format(Math.round(n)); }
+  function short(n){ return n >= 1000000 ? 'A$'+(n/1000000).toFixed(2).replace(/0$/,'')+'M' : 'A$'+Math.round(n/1000)+'k'; }
+  function num(id){ var el=document.getElementById(id); var v=parseFloat(el && el.value); return isFinite(v) && v>=0 ? v : DEFAULTS[id]; }
+  function frac(f){ return f===0.25?'¼':f===0.5?'½':String(f); }
+  function people(n){ var w=Math.floor(n+1e-9), r=Math.round((n-w)*4); var f=['','¼','½','¾'][r]; return (w?String(w):'')+f || '0'; }
+  var STEPS=[0, 0.25, 0.5, 1, 2];
+  function ensureTeam(){
+    if(!answers.team || answers.teamStage!==answers.stage){ answers.team=Object.assign({}, STAGES[answers.stage||'live'].team); answers.teamStage=answers.stage; }
+    return answers.team;
+  }
+  function teamTotal(t){ return ROLES.reduce(function(s,r){return s+(t[r.id]||0);},0); }
+  // Builds the role pickers (used in the quiz step and on the results page)
+  function buildTeamPicker(host, prefix, onChange){
+    var t=ensureTeam(); host.innerHTML='';
+    ROLES.forEach(function(r){
+      var row=document.createElement('div'); row.className='role';
+      var lab=document.createElement('span'); lab.className='role-name'; lab.id=prefix+'-lab-'+r.id; lab.textContent=r.name;
+      var seg=document.createElement('div'); seg.className='seg'; seg.setAttribute('role','group'); seg.setAttribute('aria-labelledby', lab.id);
+      STEPS.forEach(function(s){
+        var b=document.createElement('button'); b.type='button'; b.id=prefix+'-'+r.id+'-'+String(s).replace('.','_');
+        b.textContent = s===0?'None':frac(s);
+        b.setAttribute('aria-label', r.name+': '+(s===0?'none':s===1?'full time':s===2?'two people':frac(s)+' time'));
+        b.setAttribute('aria-pressed', String((t[r.id]||0)===s));
+        b.addEventListener('click', function(){ t[r.id]=s; Array.prototype.forEach.call(seg.children,function(c){c.setAttribute('aria-pressed', String(c===b));}); onChange(); });
+        seg.appendChild(b);
+      });
+      row.appendChild(lab); row.appendChild(seg); host.appendChild(row);
+    });
+  }
+
+  // ---------- Quiz ----------
+  var qtext=document.getElementById('qtext'), choicesEl=document.getElementById('choices'), backBtn=document.getElementById('back');
+  var qhint=document.getElementById('qhint'), nextBtn=document.getElementById('next');
+  function showStep(focus){
+    var q=QUESTIONS[step];
+    document.getElementById('qcount').textContent='Question '+(step+1)+' of '+QUESTIONS.length;
+    document.getElementById('qbar').style.width=((step+1)/QUESTIONS.length*100)+'%';
+    qtext.textContent=q.text;
+    qhint.textContent=q.hint||''; qhint.hidden=!q.hint;
+    choicesEl.innerHTML=''; choicesEl.className='choices';
+    nextBtn.hidden=true;
+    backBtn.disabled = step===0;
+    if(q.type==='team'){
+      choicesEl.className='roles';
+      var update=function(){ var n=teamTotal(answers.team); nextBtn.disabled=n===0; nextBtn.textContent = n===0 ? 'Pick at least one role' : 'Next: team of '+people(n)+' →'; };
+      buildTeamPicker(choicesEl, 'q', update);
+      nextBtn.hidden=false; update();
+      if(focus) qtext.focus();
+      return;
+    }
+    q.options.forEach(function(o, i){
+      var b=document.createElement('button'); b.type='button'; b.className='choice'; b.id='ans-'+q.id+'-'+i;
+      b.setAttribute('aria-pressed', String(answers[q.id]===o.v));
+      var k=document.createElement('span'); k.className='key'; k.setAttribute('aria-hidden','true'); k.textContent='ABCDE'[i]; b.appendChild(k);
+      b.appendChild(document.createTextNode(o.label));
+      if(o.hint){ var s=document.createElement('small'); s.textContent=o.hint; b.appendChild(s); }
+      b.addEventListener('click', function(){ answers[q.id]=o.v; next(); });
+      choicesEl.appendChild(b);
+    });
+    if(focus) qtext.focus();
+  }
+  nextBtn.addEventListener('click', function(){ if(teamTotal(answers.team)>0) next(); });
+  function next(){
+    if(step < QUESTIONS.length-1){ step++; showStep(true); }
+    else { showResults(); }
+  }
+  backBtn.addEventListener('click', function(){ if(step>0){ step--; showStep(true); } });
+  document.getElementById('example').addEventListener('click', function(){ answers=Object.assign({}, EXAMPLE); ensureTeam(); showResults(); });
+  document.getElementById('redo').addEventListener('click', function(){
+    step=0; document.getElementById('results').hidden=true; document.getElementById('quiz').hidden=false; showStep(true);
+  });
+
+  // ---------- Assumptions ----------
+  var assumeEl=document.getElementById('assume');
+  function group(t){ var h=document.createElement('h4'); h.textContent=t; assumeEl.appendChild(h); }
+  function input(id, label, value, stepv){
+    var f=document.createElement('div'); f.className='field';
+    var l=document.createElement('label'); l.setAttribute('for',id); l.textContent=label;
+    var i=document.createElement('input'); i.type='number'; i.id=id; i.min='0'; i.step=stepv||'1'; i.value=value;
+    i.addEventListener('input', function(){ if(!document.getElementById('results').hidden) render(); });
+    f.appendChild(l); f.appendChild(i); assumeEl.appendChild(f);
+  }
+  group('Your time');
+  input('founderValue','An hour of your time is worth (A$)', DEFAULTS.founderValue, '10');
+  group('Salaries if you hire in Australia (A$ per year)');
+  ROLES.forEach(function(r){ DEFAULTS['sal-'+r.id]=r.salary; input('sal-'+r.id, r.name, r.salary, '1000'); });
+  group('Employment costs (% of salary)');
+  input('superPct','Superannuation', DEFAULTS.superPct, '0.5');
+  input('payrollPct','Payroll tax (0% under state threshold)', DEFAULTS.payrollPct, '0.25');
+  input('onCostPct','Leave, insurance, equipment', DEFAULTS.onCostPct, '0.5');
+  input('recruitPct','Recruitment fee (one-off)', DEFAULTS.recruitPct, '1');
+  group('Hourly rates (A$)');
+  input('agencyRate','Australian agency', DEFAULTS.agencyRate, '5');
+  input('freelancerRate','Offshore freelancers', DEFAULTS.freelancerRate, '5');
+  group('Our managed team (A$ per month, full time)');
+  input('our-lead','Product / tech lead', DEFAULTS['our-lead'], '100');
+  input('our-senior','Senior developer', DEFAULTS['our-senior'], '100');
+  input('our-mid','Junior / mid-level developer', DEFAULTS['our-mid'], '100');
+  input('our-qa','QA tester', DEFAULTS['our-qa'], '100');
+  input('our-design','UI/UX designer', DEFAULTS['our-design'], '100');
+  group('AI tools (A$ per month)');
+  input('aiPerDev','AI coding tools, per in-house developer', DEFAULTS.aiPerDev, '10');
+  input('diyTools','Build it yourself: AI builder, assistant, hosting', DEFAULTS.diyTools, '10');
+  group('Hours a week you spend managing');
+  input('mgmtInhouse','In-house team', DEFAULTS.mgmtInhouse, '0.5');
+  input('mgmtAgency','Agency', DEFAULTS.mgmtAgency, '0.5');
+  input('mgmtFreelance','Freelancers', DEFAULTS.mgmtFreelance, '0.5');
+  input('mgmtManaged','Managed team', DEFAULTS.mgmtManaged, '0.5');
+
+  // ---------- Results ----------
+  function showResults(){
+    document.getElementById('quiz').hidden=true;
+    document.getElementById('results').hidden=false;
+    buildTeamPicker(document.getElementById('teamedit'), 'r', render);
+    render();
+    var h=document.getElementById('headline'); h.setAttribute('tabindex','-1'); h.focus();
+  }
+
+  function compute(){
+    var st=STAGES[answers.stage], team=ensureTeam();
+    var fte=ROLES.reduce(function(s,r){return s+team[r.id];},0);
+    var hours=fte*HOURS_PER_FTE_MONTH, fv=num('founderValue');
+    var salaries=ROLES.reduce(function(s,r){return s+num('sal-'+r.id)*team[r.id];},0);
+    var on=(num('superPct')+num('payrollPct')+num('onCostPct'))/100;
+    var cap=answers.time, budget=answers.budget;
+    var opts=[
+      {id:'diy', name:'Build it yourself with AI', team:0, ai:num('diyTools'), aiText:null, youH:st.diyH, start:'Today', oneOff:0},
+      {id:'freelance', name:'Freelancers you manage', team:hours*num('freelancerRate'), ai:0, aiText:"Freelancers' own", youH:num('mgmtFreelance'), start:'1 to 3 weeks', oneOff:0},
+      {id:'managed', name:'Our managed team + product lead', team:ROLES.reduce(function(s,x){return s+num('our-'+x.id)*team[x.id];},0), ai:0, aiText:'Included', youH:num('mgmtManaged'), start:'1 to 2 weeks', oneOff:0},
+      {id:'inhouse', name:'Hire in Australia', team:salaries*(1+on)/12, ai:fte*num('aiPerDev'), aiText:null, youH:num('mgmtInhouse'), start:'2 to 3 months to hire', oneOff:salaries*num('recruitPct')/100},
+      {id:'agency', name:'Australian agency', team:hours*num('agencyRate'), ai:0, aiText:'Included in rate', youH:num('mgmtAgency'), start:'2 to 4 weeks', oneOff:0}
+    ];
+    opts.forEach(function(o){
+      o.cash=o.team+o.ai; o.you=o.youH*WEEKS_PER_MONTH*fv; o.month=o.cash+o.you; o.year=o.month*12+o.oneOff; o.rank=o.month+o.oneOff/12;
+      o.flags=[];
+      if(o.cash>budget) o.flags.push('Over your monthly budget');
+      if(o.youH>cap) o.flags.push('Needs more of your time than you have');
+      if(o.id==='inhouse' && answers.speed==='month') o.flags.push('Too slow to hire for this month');
+      if(o.id==='diy' && (answers.stage==='live' || answers.stage==='growing')) o.flags.push('Risky for a product with customers');
+      o.score=o.year*(1+0.6*o.flags.length);
+    });
+    var ranked=opts.slice().sort(function(a,b){return (a.flags.length-b.flags.length) || (a.rank-b.rank);});
+    var best=ranked[0], runner=ranked[1];
+    function byId(id){ return opts.filter(function(o){return o.id===id;})[0]; }
+    // Honest overrides: where a different option is the better long-term answer
+    if(answers.stage==='growing' && budget===Infinity && answers.speed==='year' && cap>=4){ best=byId('inhouse'); runner=byId('managed'); }
+    else if(answers.stage==='idea' && cap>=8 && budget<=10000 && byId('diy').flags.length===0){ best=byId('diy'); runner=byId('managed'); }
+    return {opts:opts, best:best, runner:runner, fte:fte, hours:hours, team:team, st:st};
+  }
+
+  var REASONS = {
+    managed:'We own the roadmap and run the developers, you get a weekly update in plain English, and it takes about 1.5 hours of your week.',
+    inhouse:'With your budget and timeline, building your own team makes sense long term. Our managed team can cover the 2 to 3 months it takes to hire.',
+    diy:'At the idea stage, testing it yourself with AI tools is the cheapest way to find out if people want it. Bring in a team once they do.',
+    freelance:'Freelancers are the cheapest hourly option, as long as you have the time to manage them closely.',
+    agency:'An agency gets you going without managing developers yourself, at a premium price.'
+  };
+
+  function render(){
+    var r=compute(), best=r.best, runner=r.runner;
+    var cap=QUESTIONS.filter(function(q){return q.id==='time';})[0].options.filter(function(o){return o.v===answers.time;})[0].label.toLowerCase();
+    var bud=QUESTIONS.filter(function(q){return q.id==='budget';})[0].options.filter(function(o){return o.v===answers.budget;})[0].label;
+    var roles=ROLES.filter(function(x){return r.team[x.id]>0;}).map(function(x){return x.name.toLowerCase()+' ('+frac(r.team[x.id])+')';});
+    var roleText=roles.length>1 ? roles.slice(0,-1).join(', ')+' and '+roles.slice(-1) : roles[0];
+    var fteText=people(r.fte);
+
+    document.getElementById('headline').textContent=HEADLINES[answers.problem];
+    document.getElementById('story').textContent='Your product is '+r.st.desc+', and '+WHO[answers.who]+'. You need a team of about '+fteText+' '+(r.fte>1?'people':'person')+': '+roleText+'. You can give it '+cap+' a week, with a budget of '+bud+' a month. Our best fit for you is '+(best.id==='managed'?'working with our managed team and product lead':best.name.toLowerCase())+'. '+REASONS[best.id];
+
+    var picks=document.getElementById('picks'); picks.innerHTML='';
+    [[best,'Best fit','best'],[runner,'Runner-up','']].forEach(function(p){
+      var d=document.createElement('div'); d.className='pick '+p[2];
+      var l=document.createElement('span'); l.className='lbl'; l.textContent=p[1];
+      var s=document.createElement('strong'); s.textContent=p[0].name;
+      var m=document.createElement('span'); m.textContent=money(p[0].month)+' a month · about '+p[0].youH+' hours of your week';
+      d.appendChild(l); d.appendChild(s); d.appendChild(m); picks.appendChild(d);
+    });
+
+    var max=Math.max.apply(null, r.opts.map(function(o){return o.month;}))||1;
+    var rows=document.getElementById('rows'); rows.innerHTML='';
+    r.opts.forEach(function(o){
+      var tr=document.createElement('tr'); if(o===best) tr.className='is-best';
+      var badge = (o===best ? '<span class="badge best">Best fit</span>' : o===runner ? '<span class="badge runner">Runner-up</span>' : '') + (o.id==='managed' ? '<span class="badge us">That&#39;s us</span>' : '');
+      var teamCell = o.id==='diy' ? '<span class="sub">No team, just you</span>' : money(o.team)+'/mo'+(o.oneOff?'<span class="sub">+ '+money(o.oneOff)+' recruitment</span>':'');
+      var aiCell = o.aiText ? '<span class="sub">'+o.aiText+'</span>' : money(o.ai)+'/mo';
+      var flags = o.flags.length ? o.flags.map(function(f){return '<span class="flag">'+f+'</span>';}).join('') : '<span class="ok">Fits your answers</span>';
+      tr.innerHTML =
+        '<td><div class="optname">'+o.name+badge+'</div></td>'+
+        '<td><span class="year">'+money(o.month)+'</span><span class="sub">a month, incl. your time</span><div class="mini" aria-hidden="true"><span style="width:'+Math.max(2,o.month/max*100)+'%"></span></div></td>'+
+        '<td>'+teamCell+'</td>'+
+        '<td>'+aiCell+'</td>'+
+        '<td>'+o.youH+' h/week<span class="sub">'+money(o.you)+'/mo</span></td>'+
+        '<td>'+o.start+'</td>'+
+        '<td><div class="flags">'+flags+'</div></td>';
+      rows.appendChild(tr);
+    });
+    document.getElementById('teamnote').textContent='Team used for every option: '+roleText+', about '+Math.round(r.hours)+' hours of work a month. Building it yourself assumes '+r.st.diyH+' hours a week of your own time at this stage.';
+  }
+
+  showStep(false);
+})();
+</script>
+</body>
+</html>
